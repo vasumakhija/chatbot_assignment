@@ -9,7 +9,7 @@ import json
 from fpdf import FPDF
 
 # === CONFIG ===
-GROQ_API_KEY = os.getenv("GROQ_API_KEY") or "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"
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 MODEL = "llama3-8b-8192"
 SAVE_FILE = "candidates.json"
 
