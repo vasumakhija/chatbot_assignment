@@ -52,7 +52,7 @@ source venv/bin/activate
 ### 3. Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirement.txt
 ```
 
 ### 4. Export Your Groq API Key
@@ -64,7 +64,7 @@ export GROQ_API_KEY=your_api_key_here
 ### 5. Run the Application
 
 ```bash
-streamlit run hiring_assistant.py
+streamlit run 2.py
 ```
 
 Then open your browser to `http://localhost:8501`
@@ -107,7 +107,7 @@ cd chatbot_assignment
 ```bash
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirement.txt
 ```
 
 ### 6. Export Your Groq API Key
@@ -119,7 +119,7 @@ export GROQ_API_KEY=your_api_key_here
 ### 7. Run the Streamlit App
 
 ```bash
-streamlit run hiring_assistant.py --server.port 8501 --server.enableCORS false
+streamlit run 2.py --server.port 8501 --server.enableCORS false
 ```
 
 Then go to `http://your-ec2-public-ip:8501` in your browser.
@@ -160,7 +160,7 @@ Then go to `http://your-ec2-public-ip:8501` in your browser.
 
 ```
 chatbot_assignment/
-├── hiring_assistant.py       # Main Streamlit app
+├── 2.py                      # Main Streamlit app
 ├── requirements.txt          # Python dependencies
 ├── candidates.json           # Stored candidate responses
 ├── candidate_summary.pdf     # Auto-generated summary
