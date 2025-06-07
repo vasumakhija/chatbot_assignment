@@ -8,7 +8,7 @@ from fpdf import FPDF
 from googletrans import Translator
 
 # === CONFIG ===
-GROQ_API_KEY = os.getenv("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")
+GROQ_API_KEY = os.getenv("your_Grok_Api")
 MODEL = "llama3-8b-8192"
 SAVE_FILE = "candidates.json"
 
