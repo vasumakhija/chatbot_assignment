@@ -1,5 +1,3 @@
-# hiring_assistant.py
-
 import streamlit as st
 from typing import List
 import requests
@@ -7,11 +5,14 @@ import time
 import os
 import json
 from fpdf import FPDF
+from googletrans import Translator
 
 # === CONFIG ===
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 MODEL = "llama3-8b-8192"
 SAVE_FILE = "candidates.json"
+
+translator = Translator()
 
 # === Prompt Templates ===
 GREETING = """
@@ -28,6 +29,13 @@ Format the questions as a numbered list.
 END_PROMPT = """
 The candidate said a conversation-ending word. Politely thank them and let them know the next steps. End the conversation.
 """
+
+# === Translation Handling ===
+def translate_text(text, dest_lang='en'):
+    try:
+        return translator.translate(text, dest=dest_lang).text
+    except:
+        return text
 
 # === Groq Chat Function ===
 def query_groq(prompt: str) -> str:
@@ -124,9 +132,15 @@ if 'conversation_ended' not in st.session_state:
 if 'question_step' not in st.session_state:
     st.session_state.question_step = 0
 
+if 'user_lang' not in st.session_state:
+    st.session_state.user_lang = 'en'
+
+# Language Selection
+lang_options = {'English': 'en', 'Hindi': 'hi'}
+st.session_state.user_lang = lang_options[st.selectbox("Choose your language", list(lang_options.keys()))]
+
 info_fields = list(st.session_state.candidate_info.keys())
 
-# Input area
 if not st.session_state.conversation_ended:
     user_input = st.chat_input("Say something to the assistant...")
 else:
@@ -135,7 +149,8 @@ else:
 if user_input:
     if any(kw in user_input.lower() for kw in ["bye", "exit", "quit", "thank you", "byy"]):
         bot_reply = query_groq(END_PROMPT)
-        st.session_state.chat_history.append((user_input, bot_reply))
+        translated = translate_text(bot_reply, st.session_state.user_lang)
+        st.session_state.chat_history.append((user_input, translated))
         st.session_state.conversation_ended = True
 
     else:
@@ -143,26 +158,33 @@ if user_input:
 
         if step == 0:
             greeting = query_groq(GREETING)
-            st.session_state.chat_history.append((user_input, greeting))
+            translated = translate_text(greeting, st.session_state.user_lang)
+            st.session_state.chat_history.append((user_input, translated))
             st.session_state.form_step += 1
             next_field = info_fields[0]
             bot_reply = f"Can you please tell me your {next_field}?"
-            st.session_state.chat_history.append(("", bot_reply))
+            translated = translate_text(bot_reply, st.session_state.user_lang)
+            st.session_state.chat_history.append(("", translated))
 
         elif step <= len(info_fields):
             field = info_fields[step - 1]
             st.session_state.candidate_info[field] = user_input
-            st.session_state.chat_history.append((user_input, f"Thanks for your {field}!"))
+            thank_msg = f"Thanks for your {field}!"
+            translated = translate_text(thank_msg, st.session_state.user_lang)
+            st.session_state.chat_history.append((user_input, translated))
 
             if step < len(info_fields):
                 next_field = info_fields[step]
                 bot_reply = f"Can you please tell me your {next_field}?"
-                st.session_state.chat_history.append(("", bot_reply))
+                translated = translate_text(bot_reply, st.session_state.user_lang)
+                st.session_state.chat_history.append(("", translated))
                 st.session_state.form_step += 1
             else:
                 tech_stack = st.session_state.candidate_info["Tech Stack"]
                 if not is_valid_tech_stack(tech_stack):
-                    st.session_state.chat_history.append(("", f"❌ '{tech_stack}' is not a valid tech stack. Please try again with something like Python + Django, Java + Spring, etc.\n\nCan you please re-enter your Tech Stack?"))
+                    bot_reply = f"❌ '{tech_stack}' is not a valid tech stack. Please try again with something like Python + Django, Java + Spring, etc.\n\nCan you please re-enter your Tech Stack?"
+                    translated = translate_text(bot_reply, st.session_state.user_lang)
+                    st.session_state.chat_history.append(("", translated))
                     st.session_state.form_step -= 1
                 else:
                     question_prompt = QUESTION_GENERATION_TEMPLATE.format(tech_stack=tech_stack)
@@ -172,24 +194,30 @@ if user_input:
                     st.session_state.answers = []
                     st.session_state.question_step = 0
                     bot_reply = f"✅ Thanks! Based on your tech stack, here are your questions:\n\n{chr(10).join(st.session_state.generated_questions)}\n\nPlease answer question 1:"
-                    st.session_state.chat_history.append(("", bot_reply))
+                    translated = translate_text(bot_reply, st.session_state.user_lang)
+                    st.session_state.chat_history.append(("", translated))
                     st.session_state.form_step += 1
 
         elif 'generated_questions' in st.session_state and st.session_state.question_step < len(st.session_state.generated_questions):
             if len(user_input.strip()) < 10:
                 bot_reply = f"❌ Your answer seems too short. Please provide a more detailed answer to question {st.session_state.question_step + 1}."
-                st.session_state.chat_history.append((user_input, bot_reply))
+                translated = translate_text(bot_reply, st.session_state.user_lang)
+                st.session_state.chat_history.append((user_input, translated))
             else:
                 st.session_state.answers.append(user_input)
-                st.session_state.chat_history.append((user_input, f"Answer saved for question {st.session_state.question_step + 1}."))
+                saved_msg = f"Answer saved for question {st.session_state.question_step + 1}."
+                translated = translate_text(saved_msg, st.session_state.user_lang)
+                st.session_state.chat_history.append((user_input, translated))
 
                 st.session_state.question_step += 1
                 if st.session_state.question_step < len(st.session_state.generated_questions):
                     bot_reply = f"Please answer question {st.session_state.question_step + 1}:"
-                    st.session_state.chat_history.append(("", bot_reply))
+                    translated = translate_text(bot_reply, st.session_state.user_lang)
+                    st.session_state.chat_history.append(("", translated))
                 else:
                     bot_reply = "Thanks! All your answers have been recorded. Our team will get back to you soon. 😊"
-                    st.session_state.chat_history.append(("", bot_reply))
+                    translated = translate_text(bot_reply, st.session_state.user_lang)
+                    st.session_state.chat_history.append(("", translated))
                     st.session_state.conversation_ended = True
 
                     st.session_state.candidate_info["Technical Answers"] = st.session_state.answers
